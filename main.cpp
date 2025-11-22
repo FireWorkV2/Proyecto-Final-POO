@@ -1,8 +1,7 @@
-#include <iostream>
-using namespace std;
+#include "src/Juego.h"
 
 int main() {
-	
-	return 0;
+    Juego juego;
+    juego.ejecutar();
+    return 0;
 }
-
