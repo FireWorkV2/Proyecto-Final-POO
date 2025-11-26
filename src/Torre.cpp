@@ -1,70 +1,64 @@
 #include "Torre.h"
 #include <cmath>
-#include <algorithm>
 
 Torre::Torre(float x, float y) : mBasePos(x, y) {}
 
-void Torre::dibujarBase(sf::RenderWindow& ventana) {
-    sf::RectangleShape base(sf::Vector2f(300.f, 10.f));
-    base.setOrigin(150.f, 0.f); 
-    base.setPosition(mBasePos.x, mBasePos.y);
-    base.setFillColor(sf::Color(100, 100, 100));
-    base.setOutlineColor(sf::Color::White);
-    base.setOutlineThickness(2.f);
-    ventana.draw(base);
+void Torre::dibujar(sf::RenderWindow& w, bool verBase) {
+    if (verBase) {
+        sf::RectangleShape base(sf::Vector2f(300.f, 10.f));
+        base.setOrigin(150.f, 0.f);
+        base.setPosition(mBasePos);
+        base.setFillColor(sf::Color(100, 100, 100));
+        base.setOutlineColor(sf::Color::White);
+        base.setOutlineThickness(2.f);
+        w.draw(base);
+    }
+    for (auto& b : mBloques) b->dibujar(w);
 }
 
-void Torre::dibujar(sf::RenderWindow& ventana, bool mostrarBase) {
-    if (mostrarBase) dibujarBase(ventana);
-    for (auto& bloque : mBloques) {
-        bloque->dibujar(ventana);
+void Torre::agregarBloque(std::shared_ptr<Bloque> b) {
+    b->detener();
+    b->getSprite().setRotation(0.f);
+
+    float altura = b->getSprite().getGlobalBounds().height - 3.f; 
+    bool perfecto = false;
+
+    if (mBloques.empty()) {
+        b->setPosicion(b->getPosicion().x, mBasePos.y - altura/2.f - 15.f); // Ajuste fino base
+        if (std::abs(b->getPosicion().x - mBasePos.x) < 15.f) {
+            b->setPosicion(mBasePos.x, b->getPosicion().y);
+            perfecto = true;
+        }
+    } else {
+        auto ultimo = mBloques.back();
+        float nuevaY = ultimo->getPosicion().y - altura;
+        
+        if (std::abs(b->getPosicion().x - ultimo->getPosicion().x) < 15.f) {
+            b->setPosicion(ultimo->getPosicion().x, nuevaY);
+            perfecto = true;
+        } else {
+            b->setPosicion(b->getPosicion().x, nuevaY);
+        }
+    }
+
+    if (perfecto) b->setPerfecto();
+    mBloques.push_back(b);
+}
+
+bool Torre::verificarColision(std::shared_ptr<Bloque> b) {
+    float by = b->getPosicion().y;
+    float bx = b->getPosicion().x;
+    float margenY = 30.f; 
+
+    if (mBloques.empty()) {
+        return (by + margenY >= mBasePos.y && std::abs(bx - mBasePos.x) < 150.f);
+    } else {
+        auto ultimo = mBloques.back();
+        return (by + margenY >= ultimo->getPosicion().y - margenY + 5.f && 
+                std::abs(bx - ultimo->getPosicion().x) < 50.f);
     }
 }
 
 float Torre::getTopY() const {
-    if (mBloques.empty()) return mBasePos.y;
-    return mBloques.back()->getPosicion().y - 25.f;
-}
-
-void Torre::agregarBloque(std::shared_ptr<Bloque> bloque) {
-    bloque->detener();
-    bloque->getSprite().setRotation(0.f); 
-
-    float alturaBloque = 45.f; // Altura visual de encastre
-    bool esPerfecto = false;
-
-    if (mBloques.empty()) {
-        bloque->setPosicion(bloque->getPosicion().x, mBasePos.y - 30.f);
-        if (std::abs(bloque->getPosicion().x - mBasePos.x) < 20.f) {
-            bloque->setPosicion(mBasePos.x, bloque->getPosicion().y);
-            esPerfecto = true;
-        }
-    } else {
-        auto ultimo = mBloques.back();
-        float nuevaY = ultimo->getPosicion().y - alturaBloque;
-        float xActual = bloque->getPosicion().x;
-        if (std::abs(xActual - ultimo->getPosicion().x) < 15.f) {
-            xActual = ultimo->getPosicion().x; 
-            esPerfecto = true;
-        }
-        bloque->setPosicion(xActual, nuevaY);
-    }
-
-    if (esPerfecto) bloque->setPerfecto();
-    mBloques.push_back(bloque);
-}
-
-bool Torre::verificarColision(std::shared_ptr<Bloque> bloque) {
-    float by = bloque->getPosicion().y;
-    float bx = bloque->getPosicion().x;
-
-    if (mBloques.empty()) {
-        // Colisión con base
-        if (by + 25.f >= mBasePos.y && std::abs(bx - mBasePos.x) < 150.f) return true;
-    } else {
-        // Colisión con último bloque
-        auto ultimo = mBloques.back();
-        if (by + 25.f >= ultimo->getPosicion().y - 20.f && std::abs(bx - ultimo->getPosicion().x) < 50.f) return true;
-    }
-    return false;
+    return mBloques.empty() ? mBasePos.y : mBloques.back()->getPosicion().y - 25.f;
 }

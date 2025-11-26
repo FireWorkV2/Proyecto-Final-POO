@@ -2,21 +2,21 @@
 #define BLOQUE_H
 
 #include <SFML/Graphics.hpp>
+#include <string>
 
 class Bloque {
 public:
-    Bloque(float x, float y);
+    Bloque(float x, float y, const std::string& ruta);
     
     void actualizar(float dt);
     void dibujar(sf::RenderWindow& ventana);
-    
     void setPosicion(float x, float y);
-    sf::Vector2f getPosicion() const { return mSprite.getPosition(); }
-    sf::Sprite& getSprite() { return mSprite; }
-    
-    void setPerfecto(); // Cambia textura a combo
+    void setPerfecto(); 
     void soltar();
     void detener();
+
+    sf::Vector2f getPosicion() const { return mSprite.getPosition(); }
+    sf::Sprite& getSprite() { return mSprite; }
 
 private:
     sf::Sprite mSprite;
@@ -24,4 +24,4 @@ private:
     float mVelocidadY;
 };
 
-#endif // BLOQUE_H
+#endif

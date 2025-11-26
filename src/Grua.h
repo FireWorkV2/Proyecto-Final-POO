@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "Bloque.h"
 #include <memory>
+#include <vector>
 
 class Grua {
 public:
@@ -11,18 +12,24 @@ public:
     
     void actualizar(float dt);
     void dibujar(sf::RenderWindow& ventana);
-    void setY(float y); // Sigue a la cámara
-    std::shared_ptr<Bloque> soltarBloque();
+    void setY(float y);
     void generarBloque();
+    std::shared_ptr<Bloque> soltarBloque();
     bool tieneBloque() const { return mTieneBloque; }
 
 private:
+    void cambiarTextura();
+
     sf::Sprite mSpriteGancho;
     sf::Sprite mSpriteBloque;
+    sf::Vector2f mPosicionBase;
+    
     float mAngulo;
     float mTiempo;
-    sf::Vector2f mPosicionBase;
     bool mTieneBloque;
+    
+    std::vector<std::string> mTexturas;
+    std::string mTexturaActual;
 };
 
-#endif // GRUA_H
+#endif

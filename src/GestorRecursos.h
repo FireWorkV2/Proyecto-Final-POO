@@ -15,40 +15,21 @@ public:
     }
 
     sf::Texture& getTextura(const std::string& archivo) {
-        auto& mapa = getInstancia().texturas;
-        auto it = mapa.find(archivo);
-        if (it != mapa.end()) {
-            return *it->second;
+        if (texturas.find(archivo) == texturas.end()) {
+            auto tex = std::make_unique<sf::Texture>();
+            if (!tex->loadFromFile(archivo)) std::cerr << "Fallo textura: " << archivo << "\n";
+            texturas[archivo] = std::move(tex);
         }
-
-        auto textura = std::make_unique<sf::Texture>();
-        if (!textura->loadFromFile(archivo)) {
-            std::cerr << "Error cargando textura: " << archivo << std::endl;
-            // Retorna una textura vacía temporal para no crashear, pero saldrá error en consola
-            static sf::Texture texturaError;
-            return texturaError;
-        }
-
-        mapa[archivo] = std::move(textura);
-        return *mapa[archivo];
+        return *texturas[archivo];
     }
 
     sf::Font& getFuente(const std::string& archivo) {
-        auto& mapa = getInstancia().fuentes;
-        auto it = mapa.find(archivo);
-        if (it != mapa.end()) {
-            return *it->second;
+        if (fuentes.find(archivo) == fuentes.end()) {
+            auto font = std::make_unique<sf::Font>();
+            if (!font->loadFromFile(archivo)) std::cerr << "Fallo fuente: " << archivo << "\n";
+            fuentes[archivo] = std::move(font);
         }
-
-        auto fuente = std::make_unique<sf::Font>();
-        if (!fuente->loadFromFile(archivo)) {
-            std::cerr << "Error cargando fuente: " << archivo << std::endl;
-            static sf::Font fuenteError;
-            return fuenteError;
-        }
-
-        mapa[archivo] = std::move(fuente);
-        return *mapa[archivo];
+        return *fuentes[archivo];
     }
 
 private:
@@ -57,4 +38,4 @@ private:
     std::map<std::string, std::unique_ptr<sf::Font>> fuentes;
 };
 
-#endif // GESTORRECURSOS_H
+#endif

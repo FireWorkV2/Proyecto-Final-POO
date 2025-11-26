@@ -1,85 +1,44 @@
 #include "Marcador.h"
 #include "GestorRecursos.h"
-#include <cmath>
-#include <string>
 
-Marcador::Marcador(float x, float y, sf::Color cCinta1, sf::Color cCinta2, sf::Color cTexto, const std::string& rutaIcono)
-    : mTieneIcono(false)
-{
-    inicializarTexturaCinta(cCinta1, cCinta2);
+Marcador::Marcador(float x, float y, sf::Color c1, sf::Color c2, sf::Color ct, std::string icono) {
+    mTieneIcono = !icono.empty();
+    sf::Image img; img.create(32, 32, c1);
+    for(int i=0; i<32; ++i) for(int j=0; j<32; ++j) if((i+j)%16<8) img.setPixel(i,j,c2);
+    mTexCinta.loadFromImage(img); mTexCinta.setRepeated(true);
 
-    mCintaBorde.setSize(sf::Vector2f(ANCHO, ALTO));
-    mCintaBorde.setPosition(x, y);
-    mCintaBorde.setTexture(&mTexturaCinta);
-    mCintaBorde.setTextureRect(sf::IntRect(0, 0, ANCHO, ALTO));
+    mMarco.setSize({160, 90}); mMarco.setPosition(x, y); mMarco.setTexture(&mTexCinta);
+    mMarco.setTextureRect({0,0,160,90});
 
-    mCuerpoTV.setSize(sf::Vector2f(ANCHO - 2*BORDE, ALTO - 2*BORDE));
-    mCuerpoTV.setPosition(x + BORDE, y + BORDE);
-    mCuerpoTV.setFillColor(sf::Color(80, 80, 80));
-    mCuerpoTV.setOutlineThickness(2.f);
+    mCuerpo.setSize({136, 66}); mCuerpo.setPosition(x+12, y+12); mCuerpo.setFillColor({80,80,80});
+    mPantalla.setSize({116, 46}); mPantalla.setPosition(x+22, y+22); mPantalla.setFillColor({20,50,20});
 
-    mPantallaTV.setSize(sf::Vector2f(mCuerpoTV.getSize().x - 2*MARGEN, mCuerpoTV.getSize().y - 2*MARGEN));
-    mPantallaTV.setPosition(mCuerpoTV.getPosition().x + MARGEN, mCuerpoTV.getPosition().y + MARGEN);
-    mPantallaTV.setFillColor(sf::Color(20, 50, 20)); 
-    mPantallaTV.setOutlineColor(sf::Color::Black);
-    mPantallaTV.setOutlineThickness(1.f);
+    mTexto.setFont(GestorRecursos::getInstancia().getFuente("assets/arial.ttf"));
+    mTexto.setCharacterSize(32); mTexto.setFillColor(ct); mTexto.setString("0");
 
-    mTextoValor.setFont(GestorRecursos::getInstancia().getFuente("assets/arial.ttf"));
-    mTextoValor.setCharacterSize(32);
-    mTextoValor.setFillColor(cTexto);
-    mTextoValor.setString("0");
-
-    if (!rutaIcono.empty()) {
-        mIcono.setTexture(GestorRecursos::getInstancia().getTextura(rutaIcono));
-        mTieneIcono = true;
-        sf::FloatRect bounds = mIcono.getLocalBounds();
-        if (bounds.height > 0) {
-            float escala = 32.f / bounds.height;
-            mIcono.setScale(escala, escala);
-        }
+    if(mTieneIcono) {
+        mIcono.setTexture(GestorRecursos::getInstancia().getTextura(icono));
+        float s = 32.f / mIcono.getLocalBounds().height;
+        mIcono.setScale(s,s);
     }
-    centrarContenido();
+    centrar();
 }
 
-void Marcador::inicializarTexturaCinta(sf::Color c1, sf::Color c2) {
-    sf::Image imagen;
-    imagen.create(32, 32, c1);
-    for (int y = 0; y < 32; ++y) {
-        for (int x = 0; x < 32; ++x) {
-            if ((x + y) % 16 < 8) imagen.setPixel(x, y, c2);
-        }
-    }
-    if (mTexturaCinta.loadFromImage(imagen)) {
-        mTexturaCinta.setRepeated(true);
-        mTexturaCinta.setSmooth(true);
-    }
-}
+void Marcador::actualizar(int v) { mTexto.setString(std::to_string(v)); centrar(); }
 
-void Marcador::actualizar(int valor) {
-    mTextoValor.setString(std::to_string(valor));
-    centrarContenido();
-}
-
-void Marcador::centrarContenido() {
-    sf::FloatRect bTexto = mTextoValor.getLocalBounds();
-    float anchoIcono = mTieneIcono ? mIcono.getGlobalBounds().width : 0.f;
-    float margen = mTieneIcono ? 10.f : 0.f;
+void Marcador::centrar() {
+    sf::FloatRect b = mTexto.getLocalBounds();
+    sf::Vector2f c = mPantalla.getPosition() + mPantalla.getSize()/2.f;
+    float wIcon = mTieneIcono ? mIcono.getGlobalBounds().width + 10.f : 0.f;
+    float totalW = wIcon + b.width;
     
-    sf::Vector2f centro = mPantallaTV.getPosition() + mPantallaTV.getSize() / 2.f;
-    float startX = centro.x - (anchoIcono + margen + bTexto.width) / 2.f;
-
-    if (mTieneIcono) {
-        mIcono.setOrigin(0.f, mIcono.getLocalBounds().height / 2.f);
-        mIcono.setPosition(startX, centro.y);
-    }
-    mTextoValor.setOrigin(bTexto.left, bTexto.top + bTexto.height / 2.f);
-    mTextoValor.setPosition(startX + anchoIcono + margen, centro.y);
+    float startX = c.x - totalW/2.f;
+    if(mTieneIcono) mIcono.setPosition(startX, c.y - mIcono.getGlobalBounds().height/2.f);
+    mTexto.setPosition(startX + wIcon, c.y - b.height/2.f - b.top);
 }
 
-void Marcador::dibujar(sf::RenderWindow& ventana) {
-    ventana.draw(mCintaBorde);
-    ventana.draw(mCuerpoTV);
-    ventana.draw(mPantallaTV);
-    if (mTieneIcono) ventana.draw(mIcono);
-    ventana.draw(mTextoValor);
+void Marcador::dibujar(sf::RenderWindow& w) {
+    w.draw(mMarco); w.draw(mCuerpo); w.draw(mPantalla);
+    if(mTieneIcono) w.draw(mIcono);
+    w.draw(mTexto);
 }
