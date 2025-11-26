@@ -1,23 +1,17 @@
 #ifndef GESTORPUNTAJES_H
 #define GESTORPUNTAJES_H
-
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <fstream>
 
-struct EntradaPuntaje {
-    std::string nombre;
-    int puntos;
-    bool operator>(const EntradaPuntaje& otro) const {
-        return puntos > otro.puntos;
-    }
+using namespace std;
+
+struct Puntaje {
+    string nombre; int valor;
 };
 
 class GestorPuntajes {
 public:
-    static void guardarPuntaje(const std::string& nombre, int puntos);
-    static std::vector<EntradaPuntaje> obtenerMejores();
+    static void guardar(string n, int p);
+    static vector<Puntaje> leerMejores();
 };
-
 #endif

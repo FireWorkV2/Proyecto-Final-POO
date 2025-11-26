@@ -1,39 +1,24 @@
 #include "Bloque.h"
 #include "GestorRecursos.h"
 
-static const float TAMANO_BLOQUE = 60.f;
-
-Bloque::Bloque(float x, float y, const std::string& ruta) 
-    : mCayendo(false), mVelocidadY(0.f) {
-    
-    mSprite.setTexture(GestorRecursos::getInstancia().getTextura(ruta));
-    
-    // escala 60px
-    sf::FloatRect bounds = mSprite.getLocalBounds();
-    if (bounds.width > 0) {
-        float s = TAMANO_BLOQUE / bounds.width;
-        mSprite.setScale(s, s);
-        mSprite.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
-    }
-    mSprite.setPosition(x, y);
+Bloque::Bloque(float x, float y, string img) : cayendo(false), vy(0) {
+    spr.setTexture(GestorRecursos::get().getTex(img));
+    float escala = 60.f / spr.getLocalBounds().width;
+    spr.setScale(escala, escala);
+    spr.setOrigin(spr.getLocalBounds().width/2, spr.getLocalBounds().height/2);
+    spr.setPosition(x,y);
 }
 
 void Bloque::setPerfecto() {
-    mSprite.setTexture(GestorRecursos::getInstancia().getTextura("assets/bloqueperfecto.png"), true);
-    // Reajustar escala por si la textura cambia de tamaño
-    float s = TAMANO_BLOQUE / mSprite.getLocalBounds().width;
-    mSprite.setScale(s, s);
-    mSprite.setOrigin(mSprite.getLocalBounds().width / 2.f, mSprite.getLocalBounds().height / 2.f);
+    spr.setTexture(GestorRecursos::get().getTex("assets/bloqueperfecto.png"), true);
+    float escala = 60.f / spr.getLocalBounds().width;
+    spr.setScale(escala, escala);
+    spr.setOrigin(spr.getLocalBounds().width/2, spr.getLocalBounds().height/2);
 }
 
 void Bloque::actualizar(float dt) {
-    if (mCayendo) {
-        mVelocidadY += 980.f * dt; // Gravedad
-        mSprite.move(0.f, mVelocidadY * dt);
+    if(cayendo) {
+        vy += 980.f * dt; // Gravedad
+        spr.move(0, vy * dt);
     }
 }
-
-void Bloque::dibujar(sf::RenderWindow& w) { w.draw(mSprite); }
-void Bloque::setPosicion(float x, float y) { mSprite.setPosition(x, y); }
-void Bloque::soltar() { mCayendo = true; }
-void Bloque::detener() { mCayendo = false; mVelocidadY = 0.f; }

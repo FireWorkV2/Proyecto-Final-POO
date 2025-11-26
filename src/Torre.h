@@ -1,24 +1,23 @@
 #ifndef TORRE_H
 #define TORRE_H
-
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
 #include "Bloque.h"
 
+using namespace sf;
+using namespace std;
+
 class Torre {
 public:
-    static constexpr float BASE_Y = 570.f; 
-    Torre(float x = 400.f, float y = BASE_Y);
-
-    void dibujar(sf::RenderWindow& w, bool verBase);
-    void agregarBloque(std::shared_ptr<Bloque> b);
-    bool verificarColision(std::shared_ptr<Bloque> b);
-    float getTopY() const; 
-
+    Torre(float x=400, float y=570);
+    void dibujar(RenderWindow& w);
+    void agregar(shared_ptr<Bloque> b);
+    bool hayColision(shared_ptr<Bloque> b);
+    float getAltura();
+    static const int BASE_Y = 570;
 private:
-    std::vector<std::shared_ptr<Bloque>> mBloques;
-    sf::Vector2f mBasePos;
+    vector<shared_ptr<Bloque>> lista;
+    Vector2f posBase;
 };
-
 #endif

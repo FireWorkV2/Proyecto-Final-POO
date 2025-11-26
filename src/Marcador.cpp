@@ -1,44 +1,33 @@
 #include "Marcador.h"
 #include "GestorRecursos.h"
 
-Marcador::Marcador(float x, float y, sf::Color c1, sf::Color c2, sf::Color ct, std::string icono) {
-    mTieneIcono = !icono.empty();
-    sf::Image img; img.create(32, 32, c1);
-    for(int i=0; i<32; ++i) for(int j=0; j<32; ++j) if((i+j)%16<8) img.setPixel(i,j,c2);
-    mTexCinta.loadFromImage(img); mTexCinta.setRepeated(true);
+Marcador::Marcador(float x, float y, Color c1, Color c2, Color ct, string ico) {
+    Image i; i.create(32,32,c1);
+    for(int j=0;j<32;j++) for(int k=0;k<32;k++) if((j+k)%16<8) i.setPixel(j,k,c2);
+    texCinta.loadFromImage(i); texCinta.setRepeated(true);
 
-    mMarco.setSize({160, 90}); mMarco.setPosition(x, y); mMarco.setTexture(&mTexCinta);
-    mMarco.setTextureRect({0,0,160,90});
+    m.setSize({160,90}); m.setPosition(x,y); m.setTexture(&texCinta); m.setTextureRect({0,0,160,90});
+    c.setSize({136,66}); c.setPosition(x+12,y+12); c.setFillColor({80,80,80});
+    p.setSize({116,46}); p.setPosition(x+22,y+22); p.setFillColor({20,50,20});
 
-    mCuerpo.setSize({136, 66}); mCuerpo.setPosition(x+12, y+12); mCuerpo.setFillColor({80,80,80});
-    mPantalla.setSize({116, 46}); mPantalla.setPosition(x+22, y+22); mPantalla.setFillColor({20,50,20});
+    txt.setFont(GestorRecursos::get().getFont("assets/arial.ttf"));
+    txt.setCharacterSize(32); txt.setFillColor(ct); txt.setString("0");
 
-    mTexto.setFont(GestorRecursos::getInstancia().getFuente("assets/arial.ttf"));
-    mTexto.setCharacterSize(32); mTexto.setFillColor(ct); mTexto.setString("0");
-
-    if(mTieneIcono) {
-        mIcono.setTexture(GestorRecursos::getInstancia().getTextura(icono));
-        float s = 32.f / mIcono.getLocalBounds().height;
-        mIcono.setScale(s,s);
+    if(ico!="") { 
+        icono.setTexture(GestorRecursos::get().getTex(ico)); 
+        float s=32.f/icono.getLocalBounds().height; icono.setScale(s,s); 
     }
-    centrar();
+    actualizar(0);
 }
 
-void Marcador::actualizar(int v) { mTexto.setString(std::to_string(v)); centrar(); }
-
-void Marcador::centrar() {
-    sf::FloatRect b = mTexto.getLocalBounds();
-    sf::Vector2f c = mPantalla.getPosition() + mPantalla.getSize()/2.f;
-    float wIcon = mTieneIcono ? mIcono.getGlobalBounds().width + 10.f : 0.f;
-    float totalW = wIcon + b.width;
+void Marcador::actualizar(int val) {
+    txt.setString(to_string(val));
+    FloatRect b = txt.getLocalBounds();
+    float cx = p.getPosition().x + p.getSize().x/2;
+    float cy = p.getPosition().y + p.getSize().y/2;
     
-    float startX = c.x - totalW/2.f;
-    if(mTieneIcono) mIcono.setPosition(startX, c.y - mIcono.getGlobalBounds().height/2.f);
-    mTexto.setPosition(startX + wIcon, c.y - b.height/2.f - b.top);
+    txt.setOrigin(b.left+b.width/2, b.top+b.height/2); txt.setPosition(cx, cy);
+    if(icono.getTexture()) icono.setPosition(cx-60, cy-16);
 }
 
-void Marcador::dibujar(sf::RenderWindow& w) {
-    w.draw(mMarco); w.draw(mCuerpo); w.draw(mPantalla);
-    if(mTieneIcono) w.draw(mIcono);
-    w.draw(mTexto);
-}
+void Marcador::dibujar(RenderWindow& w) { w.draw(m); w.draw(c); w.draw(p); if(icono.getTexture()) w.draw(icono); w.draw(txt); }

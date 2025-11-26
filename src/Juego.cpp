@@ -1,270 +1,164 @@
 #include "Juego.h"
 #include "GestorRecursos.h"
-#include <ctime>
-#include <cstdlib>
-#include <cmath> 
-#include <algorithm> 
+#include <algorithm>
 
-enum { MENU, INSTR, RANKING, JUEGO, GAMEOVER };
-
-Juego::Juego()
-    : mVentana(sf::VideoMode(800, 600), "UNL BLOXX", sf::Style::Default)
-    , mEstado(MENU), mVidas(3), mPuntaje(0), mCombo(0), mOffsetY(0.f)
-    , mGrua(400.f, 50.f), mTorre(400.f, Torre::BASE_Y)
-    , mM_Puntos(20.f, 20.f, sf::Color::Yellow, sf::Color::Black, sf::Color(100,255,100))
-    , mM_Vidas(620.f, 20.f, sf::Color::Red, sf::Color::Black, sf::Color(255,50,50), "assets/vida.png")
-    , mOpcionMenu(0), mOpcionGO(0)
-    , mNombreYaGuardado(false)
+Juego::Juego() 
+: win(VideoMode(800,600), "UNL BLOXX"), estado(0), vidaVal(3), puntaje(0), combo(0), offsetY(0)
+, grua(400,50), torre(400, Torre::BASE_Y), opMenu(0), opGO(0), guardado(false)
+, pts(20,20, Color::Yellow, Color::Black, {100,255,100})
+, vidas(620,20, Color::Red, Color::Black, {255,50,50}, "assets/vida.png")
 {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    mVentana.setFramerateLimit(60);
-    
-    mVista.setSize(800.f, 600.f);
-    mVista.setCenter(400.f, 300.f);
-    ajustarVista(); 
+    srand(time(0)); win.setFramerateLimit(60);
+    vista.setSize(800,600); vista.setCenter(400,300); ajustar();
 
-    mFondo.setTexture(GestorRecursos::getInstancia().getTextura("assets/fondo.png"));
-    sf::Vector2u s = mFondo.getTexture()->getSize();
-    mFondo.setScale(800.f/s.x, 600.f/s.y);
+    fondo.setTexture(GestorRecursos::get().getTex("assets/fondo.png")); 
+    fondo.setScale(800.f/fondo.getLocalBounds().width, 600.f/fondo.getLocalBounds().height);
 
-    mSprLogoMenu.setTexture(GestorRecursos::getInstancia().getTextura("assets/logosinfondo.png"));
-    sf::FloatRect bLogo = mSprLogoMenu.getLocalBounds();
-    mSprLogoMenu.setOrigin(bLogo.width / 2.f, bLogo.height / 2.f);
-    if(bLogo.width > 0) { 
-        float scale = 350.f / bLogo.width; 
-        mSprLogoMenu.setScale(scale, scale); 
-    }
-    mSprLogoMenu.setPosition(230.f, 300.f); 
+    // Lambda para botones
+    auto btn = [&](Sprite& s, string r, float x, float y, float w) {
+        s.setTexture(GestorRecursos::get().getTex(r)); 
+        s.setOrigin(s.getLocalBounds().width/2, s.getLocalBounds().height/2);
+        s.setScale(w/s.getLocalBounds().width, w/s.getLocalBounds().width);
+        s.setPosition(x,y);
+    };
 
-    float xBotones = 570.f; 
-    float anchoBoton = 200.f; 
+    btn(logo, "assets/logosinfondo.png", 230, 300, 350);
+    btn(bPlay, "assets/boton_jugar.png", 570, 200, 200);
+    btn(bRank, "assets/boton_puntajes.png", 570, 270, 200);
+    btn(bInst, "assets/boton_instrucciones.png", 570, 340, 200);
+    btn(bExit, "assets/boton_volver.png", 570, 410, 200);
 
-    // Botón Jugar
-    mSprBtnJugar.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_jugar.png"));
-    sf::FloatRect bJ = mSprBtnJugar.getLocalBounds();
-    mSprBtnJugar.setOrigin(bJ.width/2.f, bJ.height/2.f);
-    if(bJ.width > 0) mSprBtnJugar.setScale(anchoBoton/bJ.width, anchoBoton/bJ.width);
-    mSprBtnJugar.setPosition(xBotones, 200.f); // Arriba
-
-    // Botón Puntajes
-    mSprBtnPuntajes.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_puntajes.png"));
-    sf::FloatRect bP = mSprBtnPuntajes.getLocalBounds();
-    mSprBtnPuntajes.setOrigin(bP.width/2.f, bP.height/2.f);
-    if(bP.width > 0) mSprBtnPuntajes.setScale(anchoBoton/bP.width, anchoBoton/bP.width);
-    mSprBtnPuntajes.setPosition(xBotones, 270.f); // Abajo del anterior
-
-    // Botón Instrucciones
-    mSprBtnInstr.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_instrucciones.png"));
-    sf::FloatRect bI = mSprBtnInstr.getLocalBounds();
-    mSprBtnInstr.setOrigin(bI.width/2.f, bI.height/2.f);
-    if(bI.width > 0) mSprBtnInstr.setScale(anchoBoton/bI.width, anchoBoton/bI.width);
-    mSprBtnInstr.setPosition(xBotones, 340.f);
-
-    // Botón Salir
-    mSprBtnSalir.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_volver.png"));
-    sf::FloatRect bS = mSprBtnSalir.getLocalBounds();
-    mSprBtnSalir.setOrigin(bS.width/2.f, bS.height/2.f);
-    if(bS.width > 0) mSprBtnSalir.setScale(anchoBoton/bS.width, anchoBoton/bS.width);
-    mSprBtnSalir.setPosition(xBotones, 410.f);
-
-    // ================= GRAFICOS GAME OVER =================
-    mSprGameOver.setTexture(GestorRecursos::getInstancia().getTextura("assets/gameover.png"));
-    sf::FloatRect bGO = mSprGameOver.getLocalBounds();
-    mSprGameOver.setOrigin(bGO.width/2.f, bGO.height/2.f);
-    if(bGO.width > 0) mSprGameOver.setScale(450.f/bGO.width, 450.f/bGO.width);
-    mSprGameOver.setPosition(400.f, 100.f); 
-
-    float anchoGO = 180.f;
-    mSprBtnReintentar.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_reintentar.png"));
-    sf::FloatRect bRe = mSprBtnReintentar.getLocalBounds();
-    mSprBtnReintentar.setOrigin(bRe.width/2.f, bRe.height/2.f);
-    if(bRe.width > 0) mSprBtnReintentar.setScale(anchoGO/bRe.width, anchoGO/bRe.width);
-    mSprBtnReintentar.setPosition(280.f, 450.f); 
-
-    mSprBtnVolver.setTexture(GestorRecursos::getInstancia().getTextura("assets/boton_volver.png"));
-    sf::FloatRect bVol = mSprBtnVolver.getLocalBounds();
-    mSprBtnVolver.setOrigin(bVol.width/2.f, bVol.height/2.f);
-    if(bVol.width > 0) mSprBtnVolver.setScale(anchoGO/bVol.width, anchoGO/bVol.width);
-    mSprBtnVolver.setPosition(520.f, 450.f); 
+    btn(tGO, "assets/gameover.png", 400, 100, 450);
+    btn(bRe, "assets/boton_reintentar.png", 280, 450, 180);
+    btn(bVolver, "assets/boton_volver.png", 520, 450, 180);
 }
 
-void Juego::ajustarVista() {
-    float ratioW = mVentana.getSize().x / 800.f;
-    float ratioH = mVentana.getSize().y / 600.f;
-    float escala = std::min(ratioW, ratioH);
-    sf::FloatRect vp;
-    vp.width  = (800.f * escala) / mVentana.getSize().x;
-    vp.height = (600.f * escala) / mVentana.getSize().y;
-    vp.left   = (1.f - vp.width) / 2.f;
-    vp.top    = (1.f - vp.height) / 2.f;
-    mVista.setViewport(vp);
+void Juego::ajustar() {
+    float rx = win.getSize().x/800.f, ry = win.getSize().y/600.f;
+    float m = min(rx, ry);
+    float w = 800*m/win.getSize().x, h = 600*m/win.getSize().y;
+    vista.setViewport({(1-w)/2, (1-h)/2, w, h});
 }
 
 void Juego::ejecutar() {
-    sf::Clock clk;
-    while(mVentana.isOpen()) {
-        procesarEventos();
-        actualizar(clk.restart());
-        renderizar();
-    }
+    Clock c;
+    while(win.isOpen()) { eventos(); actualizar(c.restart()); dibujar(); }
 }
 
-void Juego::procesarEventos() {
-    sf::Event e;
-    while(mVentana.pollEvent(e)) {
-        if(e.type == sf::Event::Closed) mVentana.close();
-        if(e.type == sf::Event::Resized) ajustarVista();
+void Juego::eventos() {
+    Event e;
+    while(win.pollEvent(e)) {
+        if(e.type == Event::Closed) win.close();
+        if(e.type == Event::Resized) ajustar();
         
-        // Input Nombre
-        if (mEstado == GAMEOVER && !mNombreYaGuardado) {
-            if (e.type == sf::Event::TextEntered) {
-                if (e.text.unicode == 8) { 
-                    if (!mNombreJugador.empty()) mNombreJugador.pop_back();
-                }
-                else if (e.text.unicode == 13) { 
-                    if (mNombreJugador.empty()) mNombreJugador = "Jugador";
-                    GestorPuntajes::guardarPuntaje(mNombreJugador, mPuntaje);
-                    mNombreYaGuardado = true; 
-                }
-                else if (e.text.unicode < 128 && mNombreJugador.size() < 10) {
-                    mNombreJugador += static_cast<char>(e.text.unicode);
-                }
+        // Input nombre
+        if(estado==4 && !guardado && e.type == Event::TextEntered) {
+            if(e.text.unicode==8 && !nombre.empty()) nombre.pop_back();
+            else if(e.text.unicode==13) { 
+                if(nombre.empty()) nombre="Jugador"; 
+                GestorPuntajes::guardar(nombre, puntaje); guardado=true; 
             }
+            else if(e.text.unicode<128 && nombre.size()<10) nombre += (char)e.text.unicode;
         }
 
-        if(e.type == sf::Event::KeyPressed) {
-            if(e.key.code == sf::Keyboard::Escape) {
-                if(mEstado == JUEGO || mEstado == RANKING) mEstado = MENU; else mVentana.close();
+        if(e.type == Event::KeyPressed) {
+            if(e.key.code == Keyboard::Escape) {
+                if(estado==3 || estado==2) estado=0; else win.close();
             }
-            
-            // MENU (4 opc)
-            if(mEstado == MENU) {
-                if(e.key.code == sf::Keyboard::Up) mOpcionMenu = (mOpcionMenu+3)%4;
-                if(e.key.code == sf::Keyboard::Down) mOpcionMenu = (mOpcionMenu+1)%4;
-                if(e.key.code == sf::Keyboard::Enter) {
-                    if(mOpcionMenu==0) { reiniciar(); mEstado=JUEGO; }
-                    else if(mOpcionMenu==1) { mRankingActual = GestorPuntajes::obtenerMejores(); mEstado=RANKING; }
-                    else if(mOpcionMenu==2) mEstado=INSTR;
-                    else mVentana.close(); 
+            if(estado==0) { // Menu
+                if(e.key.code==Keyboard::Up) opMenu=(opMenu+3)%4;
+                if(e.key.code==Keyboard::Down) opMenu=(opMenu+1)%4;
+                if(e.key.code==Keyboard::Enter) {
+                    if(opMenu==0) { reiniciar(); estado=3; }
+                    else if(opMenu==1) { ranking=GestorPuntajes::leerMejores(); estado=2; }
+                    else if(opMenu==2) estado=1;
+                    else win.close();
                 }
             }
-            // JUEGO
-            else if(mEstado == JUEGO) {
-                if((e.key.code == sf::Keyboard::Space || e.key.code == sf::Keyboard::Down) && mGrua.tieneBloque()) {
-                    if(auto b = mGrua.soltarBloque()) mBloques.push_back(b);
+            else if(estado==3) { // Juego
+                if((e.key.code==Keyboard::Space || e.key.code==Keyboard::Down) && grua.tieneBloque())
+                    if(auto b=grua.soltar()) bloques.push_back(b);
+            }
+            else if(estado==4 && guardado) { // GO
+                if(e.key.code==Keyboard::Left || e.key.code==Keyboard::Right) opGO=!opGO;
+                if(e.key.code==Keyboard::Enter) {
+                    if(opGO==0) { reiniciar(); estado=3; } else estado=0;
                 }
             }
-            // GAMEOVER
-            else if(mEstado == GAMEOVER && mNombreYaGuardado) {
-                if(e.key.code == sf::Keyboard::Left || e.key.code == sf::Keyboard::Right) mOpcionGO = !mOpcionGO; 
-                if(e.key.code == sf::Keyboard::Enter) {
-                    if(mOpcionGO == 0) { reiniciar(); mEstado = JUEGO; } 
-                    else { mEstado = MENU; }
-                }
-            }
-            else if((mEstado == INSTR || mEstado == RANKING) && e.key.code == sf::Keyboard::Enter) mEstado=MENU;
+            else if((estado==1 || estado==2) && e.key.code==Keyboard::Enter) estado=0;
         }
     }
 }
 
-void Juego::actualizar(sf::Time dt) {
-    if(mEstado != JUEGO) return;
-
-    float d = dt.asSeconds();
-    float camY = mTorre.getTopY();
-    if(camY < 500.f) mOffsetY += (500.f - camY - mOffsetY) * 5.f * d;
-
-    mGrua.setY(-mOffsetY);
-    mGrua.actualizar(d);
+void Juego::actualizar(Time dt) {
+    if(estado!=3) return;
+    float t = dt.asSeconds();
+    if(torre.getAltura() < 500) offsetY += (500 - torre.getAltura() - offsetY) * 5 * t;
     
-    mM_Puntos.actualizar(mPuntaje);
-    mM_Vidas.actualizar(mVidas);
+    grua.setY(-offsetY); grua.actualizar(t);
+    pts.actualizar(puntaje); vidas.actualizar(vidaVal);
 
-    for(auto it = mBloques.begin(); it != mBloques.end(); ) {
-        (*it)->actualizar(d);
-        if(mTorre.verificarColision(*it)) {
-            mTorre.agregarBloque(*it);
-            mPuntaje += 10 + (mCombo++)*5;
-            it = mBloques.erase(it);
-            mGrua.generarBloque();
-        } 
-        else if((*it)->getPosicion().y > 650.f - mOffsetY) {
-            mVidas--; mCombo=0; it = mBloques.erase(it);
-            if(mVidas<=0) { mEstado = GAMEOVER; mNombreJugador = ""; mNombreYaGuardado = false; } else mGrua.generarBloque();
-        } 
-        else ++it;
+    for(auto i=bloques.begin(); i!=bloques.end(); ) {
+        (*i)->actualizar(t);
+        if(torre.hayColision(*i)) {
+            torre.agregar(*i); puntaje += 10 + (combo++)*5; i=bloques.erase(i); grua.generar();
+        } else if((*i)->getSprite().getPosition().y > 650-offsetY) {
+            vidaVal--; combo=0; i=bloques.erase(i);
+            if(vidaVal<=0) { estado=4; nombre=""; guardado=false; } else grua.generar();
+        } else ++i;
     }
 }
 
-void Juego::renderizar() {
-    mVentana.clear();
-    sf::View vMundo = mVista; vMundo.move(0.f, -mOffsetY); mVentana.setView(vMundo);
-    sf::Sprite f = mFondo; f.setPosition(0.f, -mOffsetY); mVentana.draw(f);
-    if(mEstado == JUEGO) {
-        mTorre.dibujar(mVentana, true); for(auto& b : mBloques) b->dibujar(mVentana); mGrua.dibujar(mVentana);
-    }
-    mVentana.setView(mVista);
-    
-    if(mEstado == JUEGO) { mM_Puntos.dibujar(mVentana); mM_Vidas.dibujar(mVentana); }
+void Juego::dibujar() {
+    win.clear();
+    View v = vista; v.move(0, -offsetY); win.setView(v);
+    Sprite f = fondo; f.setPosition(0, -offsetY); win.draw(f);
+
+    if(estado==3) { torre.dibujar(win); for(auto& b:bloques) b->dibujar(win); grua.dibujar(win); }
+
+    win.setView(vista);
+    if(estado==3) { pts.dibujar(win); vidas.dibujar(win); }
     else {
-        sf::Text t; t.setFont(GestorRecursos::getInstancia().getFuente("assets/arial.ttf"));
+        Text tx; tx.setFont(GestorRecursos::get().getFont("assets/arial.ttf"));
         
-        if(mEstado == MENU) {
-            mVentana.draw(mSprLogoMenu);
-            mSprBtnJugar.setColor(mOpcionMenu==0 ? sf::Color::White : sf::Color(100,100,100));
-            mSprBtnPuntajes.setColor(mOpcionMenu==1 ? sf::Color::White : sf::Color(100,100,100));
-            mSprBtnInstr.setColor(mOpcionMenu==2 ? sf::Color::White : sf::Color(100,100,100));
-            mSprBtnSalir.setColor(mOpcionMenu==3 ? sf::Color::White : sf::Color(100,100,100));
-            
-            mVentana.draw(mSprBtnJugar);
-            mVentana.draw(mSprBtnPuntajes);
-            mVentana.draw(mSprBtnInstr);
-            mVentana.draw(mSprBtnSalir);
-        } 
-        else if(mEstado == INSTR) {
-            t.setString("ESPACIO: Soltar bloque.\nENTER: Volver."); 
-            t.setCharacterSize(30); t.setPosition(100, 200); t.setFillColor(sf::Color::White);
-            mVentana.draw(t);
+        if(estado==0) { // Menu
+            win.draw(logo);
+            bPlay.setColor(opMenu==0?Color::White:Color(100,100,100));
+            bRank.setColor(opMenu==1?Color::White:Color(100,100,100));
+            bInst.setColor(opMenu==2?Color::White:Color(100,100,100));
+            bExit.setColor(opMenu==3?Color::White:Color(100,100,100));
+            win.draw(bPlay); win.draw(bRank); win.draw(bInst); win.draw(bExit);
         }
-        else if(mEstado == RANKING) {
-            t.setString("MEJORES PUNTAJES"); t.setCharacterSize(40); t.setFillColor(sf::Color::Yellow);
-            t.setPosition(200, 50); mVentana.draw(t);
-            t.setCharacterSize(30); t.setFillColor(sf::Color::White);
-            for(size_t i=0; i<mRankingActual.size(); ++i) {
-                std::string linea = std::to_string(i+1) + ". " + mRankingActual[i].nombre + " - " + std::to_string(mRankingActual[i].puntos);
-                t.setString(linea); t.setPosition(250, 150 + i*50); mVentana.draw(t);
+        else if(estado==1) { // Instr
+            tx.setString("ESPACIO: Soltar bloque.\nENTER: Volver."); 
+            tx.setPosition(100,200); win.draw(tx);
+        }
+        else if(estado==2) { // Rank
+            tx.setString("TOP 5"); tx.setFillColor(Color::Yellow); tx.setPosition(350,50); win.draw(tx);
+            tx.setFillColor(Color::White);
+            for(size_t i=0; i<ranking.size(); i++) {
+                tx.setString(to_string(i+1)+". "+ranking[i].nombre+" - "+to_string(ranking[i].valor));
+                tx.setPosition(250, 150+i*50); win.draw(tx);
             }
-            t.setString("ENTER para volver"); t.setPosition(250, 500); t.setFillColor(sf::Color::Yellow); mVentana.draw(t);
+            tx.setString("ENTER volver"); tx.setPosition(300,500); win.draw(tx);
         }
-        else if(mEstado == GAMEOVER) {
-            mVentana.draw(mSprGameOver);
-            t.setString("Puntos: " + std::to_string(mPuntaje)); 
-            t.setFillColor(sf::Color::White); t.setCharacterSize(35);
-            sf::FloatRect bt = t.getLocalBounds(); t.setOrigin(bt.width/2.f, 0.f); t.setPosition(400.f, 230.f); 
-            mVentana.draw(t);
-
-            if (!mNombreYaGuardado) {
-                t.setString("Ingresa tu nombre: " + mNombreJugador + "_"); 
-                t.setCharacterSize(25); t.setFillColor(sf::Color::Yellow);
-                sf::FloatRect bn = t.getLocalBounds(); t.setOrigin(bn.width/2.f, 0.f); t.setPosition(400.f, 300.f); 
-                mVentana.draw(t);
-                
-                t.setString("(Presiona ENTER para guardar)"); t.setCharacterSize(20); t.setFillColor(sf::Color::White);
-                sf::FloatRect ba = t.getLocalBounds(); t.setOrigin(ba.width/2.f, 0.f); t.setPosition(400.f, 340.f); 
-                mVentana.draw(t);
+        else if(estado==4) { // Game Over
+            win.draw(tGO);
+            tx.setString("Puntos: "+to_string(puntaje)); tx.setPosition(350,230); win.draw(tx);
+            if(!guardado) {
+                tx.setString("Nombre: "+nombre+"_"); tx.setFillColor(Color::Yellow); 
+                tx.setPosition(350,300); win.draw(tx);
             } else {
-                if (mOpcionGO == 0) { mSprBtnReintentar.setColor(sf::Color::White); mSprBtnVolver.setColor(sf::Color(100,100,100)); } 
-                else { mSprBtnReintentar.setColor(sf::Color(100,100,100)); mSprBtnVolver.setColor(sf::Color::White); }
-                mVentana.draw(mSprBtnReintentar); mVentana.draw(mSprBtnVolver);
+                bRe.setColor(opGO==0?Color::White:Color(100,100,100));
+                bVolver.setColor(opGO==1?Color::White:Color(100,100,100));
+                win.draw(bRe); win.draw(bVolver);
             }
         }
     }
-    mVentana.display();
+    win.display();
 }
 
 void Juego::reiniciar() {
-    mVidas=3; mPuntaje=0; mCombo=0; mOffsetY=0.f;
-    mBloques.clear();
-    mTorre = Torre(400.f, Torre::BASE_Y);
-    mGrua = Grua(400.f, 50.f);
+    vidaVal=3; puntaje=0; combo=0; offsetY=0; bloques.clear();
+    torre=Torre(400, Torre::BASE_Y); grua=Grua(400,50);
 }

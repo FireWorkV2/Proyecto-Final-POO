@@ -1,35 +1,29 @@
 #ifndef GRUA_H
 #define GRUA_H
-
 #include <SFML/Graphics.hpp>
-#include "Bloque.h"
-#include <memory>
 #include <vector>
+#include <memory>
+#include "Bloque.h"
+
+using namespace sf;
+using namespace std;
 
 class Grua {
 public:
     Grua(float x, float y);
-    
     void actualizar(float dt);
-    void dibujar(sf::RenderWindow& ventana);
+    void dibujar(RenderWindow& w);
     void setY(float y);
-    void generarBloque();
-    std::shared_ptr<Bloque> soltarBloque();
-    bool tieneBloque() const { return mTieneBloque; }
+    void generar();
+    shared_ptr<Bloque> soltar();
+    bool tieneBloque() { return hay; }
 
 private:
-    void cambiarTextura();
-
-    sf::Sprite mSpriteGancho;
-    sf::Sprite mSpriteBloque;
-    sf::Vector2f mPosicionBase;
-    
-    float mAngulo;
-    float mTiempo;
-    bool mTieneBloque;
-    
-    std::vector<std::string> mTexturas;
-    std::string mTexturaActual;
+    Sprite gancho, bloqueVis;
+    Vector2f base;
+    float angulo, tiempo;
+    bool hay;
+    vector<string> texturas;
+    string texActual;
 };
-
 #endif

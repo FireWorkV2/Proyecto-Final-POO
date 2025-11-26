@@ -1,41 +1,40 @@
 #ifndef GESTORRECURSOS_H
 #define GESTORRECURSOS_H
-
 #include <SFML/Graphics.hpp>
-#include <map>
+#include <vector>
 #include <string>
-#include <memory>
-#include <iostream>
+
+using namespace sf;
+using namespace std;
 
 class GestorRecursos {
 public:
-    static GestorRecursos& getInstancia() {
-        static GestorRecursos instancia;
-        return instancia;
+    static GestorRecursos& get() { static GestorRecursos i; return i; }
+
+    Texture& getTex(string ruta) {
+        // Busqueda lineal simple
+        for(auto& par : texturas) {
+            if(par.first == ruta) return *par.second;
+        }
+        // Si no existe, cargar y guardar
+        Texture* t = new Texture();
+        t->loadFromFile(ruta);
+        texturas.push_back(make_pair(ruta, t));
+        return *t;
     }
 
-    sf::Texture& getTextura(const std::string& archivo) {
-        if (texturas.find(archivo) == texturas.end()) {
-            auto tex = std::make_unique<sf::Texture>();
-            if (!tex->loadFromFile(archivo)) std::cerr << "Fallo textura: " << archivo << "\n";
-            texturas[archivo] = std::move(tex);
+    Font& getFont(string ruta) {
+        for(auto& par : fuentes) {
+            if(par.first == ruta) return *par.second;
         }
-        return *texturas[archivo];
-    }
-
-    sf::Font& getFuente(const std::string& archivo) {
-        if (fuentes.find(archivo) == fuentes.end()) {
-            auto font = std::make_unique<sf::Font>();
-            if (!font->loadFromFile(archivo)) std::cerr << "Fallo fuente: " << archivo << "\n";
-            fuentes[archivo] = std::move(font);
-        }
-        return *fuentes[archivo];
+        Font* f = new Font();
+        f->loadFromFile(ruta);
+        fuentes.push_back(make_pair(ruta, f));
+        return *f;
     }
 
 private:
-    GestorRecursos() {}
-    std::map<std::string, std::unique_ptr<sf::Texture>> texturas;
-    std::map<std::string, std::unique_ptr<sf::Font>> fuentes;
+    vector<pair<string, Texture*>> texturas;
+    vector<pair<string, Font*>> fuentes;
 };
-
 #endif

@@ -3,18 +3,15 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 
+using namespace sf;
+using namespace std;
+
 class Marcador {
 public:
-    Marcador(float x, float y, sf::Color c1, sf::Color c2, sf::Color texto, std::string icono = "");
-    void actualizar(int valor);
-    void dibujar(sf::RenderWindow& w);
-
+    Marcador(float x, float y, Color c1, Color c2, Color ct, string ico="");
+    void actualizar(int val);
+    void dibujar(RenderWindow& w);
 private:
-    void centrar();
-    sf::RectangleShape mMarco, mCuerpo, mPantalla;
-    sf::Text mTexto;
-    sf::Sprite mIcono;
-    bool mTieneIcono;
-    sf::Texture mTexCinta;
+    RectangleShape m, c, p; Text txt; Sprite icono; Texture texCinta;
 };
 #endif

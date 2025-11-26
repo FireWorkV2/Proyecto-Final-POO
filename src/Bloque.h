@@ -1,27 +1,25 @@
 #ifndef BLOQUE_H
 #define BLOQUE_H
-
 #include <SFML/Graphics.hpp>
 #include <string>
 
+using namespace sf;
+using namespace std;
+
 class Bloque {
 public:
-    Bloque(float x, float y, const std::string& ruta);
-    
+    Bloque(float x, float y, string img);
     void actualizar(float dt);
-    void dibujar(sf::RenderWindow& ventana);
-    void setPosicion(float x, float y);
-    void setPerfecto(); 
-    void soltar();
-    void detener();
-
-    sf::Vector2f getPosicion() const { return mSprite.getPosition(); }
-    sf::Sprite& getSprite() { return mSprite; }
+    void dibujar(RenderWindow& w) { w.draw(spr); }
+    
+    Sprite& getSprite() { return spr; }
+    void setPerfecto();
+    void soltar() { cayendo=true; }
+    void detener() { cayendo=false; vy=0; }
 
 private:
-    sf::Sprite mSprite;
-    bool mCayendo;
-    float mVelocidadY;
+    Sprite spr;
+    bool cayendo;
+    float vy;
 };
-
 #endif
