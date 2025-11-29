@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
+#include <string> // Necesario para texto
 #include "Grua.h"
 #include "Torre.h"
 #include "Marcador.h"
@@ -21,6 +22,7 @@ private:
     void dibujar();
     void ajustar();
     void reiniciar();
+    void cargarInstrucciones(); 
 
     RenderWindow win;
     View vista;
@@ -37,5 +39,7 @@ private:
 
     string nombre; bool guardado;
     vector<Puntaje> ranking;
+    
+    string textoInstrucciones; 
 };
 #endif

@@ -1,6 +1,7 @@
 #include "Juego.h"
 #include "GestorRecursos.h"
 #include <algorithm>
+#include <fstream> 
 
 Juego::Juego() 
 : win(VideoMode(800,600), "UNL BLOXX"), estado(0), vidaVal(3), puntaje(0), combo(0), offsetY(0)
@@ -14,7 +15,6 @@ Juego::Juego()
     fondo.setTexture(GestorRecursos::get().getTex("assets/fondo.png")); 
     fondo.setScale(800.f/fondo.getLocalBounds().width, 600.f/fondo.getLocalBounds().height);
 
-    // Lambda para botones
     auto btn = [&](Sprite& s, string r, float x, float y, float w) {
         s.setTexture(GestorRecursos::get().getTex(r)); 
         s.setOrigin(s.getLocalBounds().width/2, s.getLocalBounds().height/2);
@@ -31,6 +31,31 @@ Juego::Juego()
     btn(tGO, "assets/gameover.png", 400, 100, 450);
     btn(bRe, "assets/boton_reintentar.png", 280, 450, 180);
     btn(bVolver, "assets/boton_volver.png", 520, 450, 180);
+
+    cargarInstrucciones(); 
+}
+
+void Juego::cargarInstrucciones() {
+    ifstream lectura("instrucciones.dat");
+    if(!lectura.is_open()) {
+        ofstream escritura("instrucciones.dat");
+        escritura << "UNL BLOXX - Guia de Comandos" << endl << endl;
+        escritura << " - Presiona Espacio o Flecha Abajo" << endl;
+        escritura << "   para soltar el bloque." << endl << endl;
+        escritura << " - Apila los bloques lo mas alto posible" << endl;
+        escritura << "   sin que se caigan." << endl << endl;
+        escritura << " - Si un bloque cae, pierdes una vida." << endl;
+        escritura << "   El juego termina al perder todas." << endl;
+        escritura.close();
+        lectura.open("instrucciones.dat");
+    }
+
+    string linea;
+    textoInstrucciones = "";
+    while(getline(lectura, linea)) {
+        textoInstrucciones += linea + "\n";
+    }
+    lectura.close();
 }
 
 void Juego::ajustar() {
@@ -51,14 +76,15 @@ void Juego::eventos() {
         if(e.type == Event::Closed) win.close();
         if(e.type == Event::Resized) ajustar();
         
-        // Input nombre
         if(estado==4 && !guardado && e.type == Event::TextEntered) {
             if(e.text.unicode==8 && !nombre.empty()) nombre.pop_back();
-            else if(e.text.unicode==13) { 
+            else if(e.text.unicode==13) {
                 if(nombre.empty()) nombre="Jugador"; 
                 GestorPuntajes::guardar(nombre, puntaje); guardado=true; 
             }
-            else if(e.text.unicode<128 && nombre.size()<10) nombre += (char)e.text.unicode;
+            else if(e.text.unicode > 32 && e.text.unicode < 128 && nombre.size()<10) {
+                nombre += (char)e.text.unicode;
+            }
         }
 
         if(e.type == Event::KeyPressed) {
@@ -129,9 +155,15 @@ void Juego::dibujar() {
             bExit.setColor(opMenu==3?Color::White:Color(100,100,100));
             win.draw(bPlay); win.draw(bRank); win.draw(bInst); win.draw(bExit);
         }
-        else if(estado==1) { // Instr
-            tx.setString("ESPACIO: Soltar bloque.\nENTER: Volver."); 
-            tx.setPosition(100,200); win.draw(tx);
+        else if(estado==1) { // Instrucciones
+            RectangleShape box({600, 400}); box.setPosition(100, 100); 
+            box.setFillColor(Color(0, 0, 0, 200)); win.draw(box);
+            tx.setCharacterSize(24);
+            tx.setString(textoInstrucciones); 
+            tx.setPosition(120, 120); win.draw(tx);
+            tx.setString("Presiona ENTER para volver al menu.");
+            tx.setPosition(200, 450); 
+            win.draw(tx);
         }
         else if(estado==2) { // Rank
             tx.setString("TOP 5"); tx.setFillColor(Color::Yellow); tx.setPosition(350,50); win.draw(tx);
@@ -142,7 +174,7 @@ void Juego::dibujar() {
             }
             tx.setString("ENTER volver"); tx.setPosition(300,500); win.draw(tx);
         }
-        else if(estado==4) { // Game Over
+        else if(estado==4) { // GO
             win.draw(tGO);
             tx.setString("Puntos: "+to_string(puntaje)); tx.setPosition(350,230); win.draw(tx);
             if(!guardado) {

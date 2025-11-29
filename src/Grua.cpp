@@ -8,7 +8,7 @@ Grua::Grua(float x, float y) : base(x,y), angulo(0), tiempo(0), hay(true) {
     texturas.push_back("assets/bloquefca.png"); texturas.push_back("assets/bloquefce.png");
     texturas.push_back("assets/bloquefcjs.png"); texturas.push_back("assets/bloquefcv.png");
     texturas.push_back("assets/bloquefhuc.png"); texturas.push_back("assets/bloquefbcb.png");
-
+    // configurar el gancho
     gancho.setTexture(GestorRecursos::get().getTex("assets/gancho.png"));
     gancho.setOrigin(gancho.getLocalBounds().width/2, 0);
     gancho.setPosition(base);
@@ -16,6 +16,7 @@ Grua::Grua(float x, float y) : base(x,y), angulo(0), tiempo(0), hay(true) {
     generar();
 }
 
+// generar un nuevo bloque para la grúa
 void Grua::generar() {
     hay = true;
     texActual = texturas[rand() % texturas.size()];
@@ -25,6 +26,7 @@ void Grua::generar() {
     bloqueVis.setOrigin(bloqueVis.getLocalBounds().width/2, 0);
 }
 
+// actualizar la posición y el ángulo de la grúa
 void Grua::actualizar(float dt) {
     tiempo += dt;
     angulo = 55.f * sin(tiempo * 1.8f);
@@ -36,15 +38,15 @@ void Grua::actualizar(float dt) {
         bloqueVis.setRotation(angulo);
     }
 }
-
+// dibujar la grúa y el bloque visible
 void Grua::dibujar(RenderWindow& w) { w.draw(gancho); if(hay) w.draw(bloqueVis); }
 void Grua::setY(float y) { base.y = y; gancho.setPosition(base); }
-
+// soltar el bloque y devolver un puntero compartido al mismo
 shared_ptr<Bloque> Grua::soltar() {
     if(!hay) return nullptr;
     Transform tr = bloqueVis.getTransform();
     Vector2f pos = tr.transformPoint(bloqueVis.getLocalBounds().width/2, bloqueVis.getLocalBounds().height/2);
-    
+    // crear el bloque y configurarlo
     auto b = make_shared<Bloque>(pos.x, pos.y, texActual);
     b->getSprite().setRotation(bloqueVis.getRotation());
     b->soltar(); hay = false;
