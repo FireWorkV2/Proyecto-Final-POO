@@ -11,11 +11,14 @@ Proyecto Final de la materia Programación Orientada a Objetos, de la carrera In
 # Logo
 ![Logo](https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/logosinfondo.png?raw=true)
 # Capturas del Juego
-https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap1.png
-https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap1.png
-https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap1.png
-https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap1.png
 
 
 
+![App Screenshot](https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap1.png?raw=true)
+
+![App Screenshot](https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap2.png?raw=true)
+
+![App Screenshot](https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap3.png?raw=true)
+
+![App Screenshot](https://github.com/FireWorkV2/Proyecto-Final-POO/blob/main/assets/cap4.png?raw=true)
 
