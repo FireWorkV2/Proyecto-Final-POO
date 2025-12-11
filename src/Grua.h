@@ -1,29 +1,24 @@
 #ifndef GRUA_H
 #define GRUA_H
 #include <SFML/Graphics.hpp>
-#include <vector>
-#include <memory>
 #include "Bloque.h"
+#include <vector>
 
-using namespace sf;
-using namespace std;
-
+// Clase que controla el gancho y genera bloques
 class Grua {
 public:
     Grua(float x, float y);
-    void actualizar(float dt);
-    void dibujar(RenderWindow& w);
-    void setY(float y);
-    void generar();
-    shared_ptr<Bloque> soltar();
-    bool tieneBloque() { return hay; }
+    void actualizar(float deltaTiempo, float posY);
+    void dibujar(RenderWindow& ventana);
+    void generarBloque(); 
+    Bloque* soltarBloque(); 
+    bool tieneBloque() { return hayBloque; }
 
 private:
-    Sprite gancho, bloqueVis;
-    Vector2f base;
-    float angulo, tiempo;
-    bool hay;
-    vector<string> texturas;
-    string texActual;
+    Sprite spriteGancho, bloqueVisible;
+    float tiempo, angulo;
+    bool hayBloque;
+    string texturaActual;
+    vector<string> listaTexturas; 
 };
 #endif

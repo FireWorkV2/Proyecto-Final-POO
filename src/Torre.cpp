@@ -1,40 +1,57 @@
 #include "Torre.h"
 #include <cmath>
 
-// constructor de la torre
-Torre::Torre(float x, float y) : posBase(x,y) {}
-// dibujar la torre y sus bloques
-void Torre::dibujar(RenderWindow& w) {
-    RectangleShape b({300,10}); b.setOrigin(150,0); b.setPosition(posBase);
-    b.setFillColor({100,100,100}); w.draw(b);
-    for(auto& bl : lista) bl->dibujar(w);
-}
-// obtener la altura actual de la torre
-float Torre::getAltura() { 
-    return lista.empty() ? posBase.y : lista.back()->getSprite().getPosition().y - 25.f; 
-}
-// agregar un bloque a la torre
-void Torre::agregar(shared_ptr<Bloque> b) {
-    b->detener(); b->getSprite().setRotation(0);
-    float h = b->getSprite().getGlobalBounds().height;
-    bool perf = false;
+Torre::Torre(float y) : baseY(y) {}
+// cuando se destruye la torre, borramos los bloques
+Torre::~Torre() { reiniciar(); }
 
-    float xDest = lista.empty() ? posBase.x : lista.back()->getSprite().getPosition().x;
-    float yDest = lista.empty() ? posBase.y - h/2 : lista.back()->getSprite().getGlobalBounds().top - h/2;
+void Torre::reiniciar() {
+    for (auto b : bloquesApilados) delete b; // se libera la memoria
+    bloquesApilados.clear();
+}
 
-    if(abs(b->getSprite().getPosition().x - xDest) < 15) {
-        b->getSprite().setPosition(xDest, yDest); perf = true;
+// altura del ultimo bloque
+float Torre::obtenerAltura() {
+    return bloquesApilados.empty() ? baseY : bloquesApilados.back()->sprite.getPosition().y - 25;
+}
+
+void Torre::dibujar(RenderWindow& ventana) {
+    // el piso dibujado
+    RectangleShape suelo({300, 10}); 
+    suelo.setOrigin(150, 0); 
+    suelo.setPosition(400, baseY); 
+    suelo.setFillColor({100, 100, 100});
+    ventana.draw(suelo);
+    // Se dibujan todos los bloques
+    for (auto b : bloquesApilados) b->dibujar(ventana);
+}
+
+bool Torre::agregarBloque(Bloque* b) {
+    b->cayendo = false; 
+    b->velocidadY = 0; 
+    b->sprite.setRotation(0); // se endereza el bloque
+    float xDestino = bloquesApilados.empty() ? 400 : bloquesApilados.back()->sprite.getPosition().x;
+    float yDestino = bloquesApilados.empty() ? baseY : bloquesApilados.back()->sprite.getGlobalBounds().top;
+    
+    bool perfecto = false;
+
+    // si cae cerca del centro del sprite , se lo hace perfecto
+    if (abs(b->sprite.getPosition().x - xDestino) < 5) {
+        b->sprite.setPosition(xDestino, yDestino - b->sprite.getGlobalBounds().height/2);
+        b->hacerPerfecto();
+        perfecto = true;
     } else {
-        b->getSprite().setPosition(b->getSprite().getPosition().x, yDest);
+        b->sprite.setPosition(b->sprite.getPosition().x, yDestino - b->sprite.getGlobalBounds().height/2);
+        perfecto = false;
     }
-
-    if(perf) b->setPerfecto();
-    lista.push_back(b);
+    bloquesApilados.push_back(b);
+    return perfecto;
 }
 
-// verificar si hay colisión con la torre
-bool Torre::hayColision(shared_ptr<Bloque> b) {
-    FloatRect r = b->getSprite().getGlobalBounds();
-    if(lista.empty()) return (r.top + r.height >= posBase.y && abs(b->getSprite().getPosition().x - posBase.x) < 150);
-    return r.intersects(lista.back()->getSprite().getGlobalBounds());
+bool Torre::verificarColision(Bloque* b) {
+    // si no hay nada, se ve el piso
+    if (bloquesApilados.empty()) 
+        return (b->sprite.getPosition().y + b->sprite.getGlobalBounds().height/2 >= baseY && abs(b->sprite.getPosition().x - 400) < 150);
+    // si hay bloques, se ve el ultimo
+    return b->sprite.getGlobalBounds().intersects(bloquesApilados.back()->sprite.getGlobalBounds());
 }

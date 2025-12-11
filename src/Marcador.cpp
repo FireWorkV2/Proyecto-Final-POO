@@ -1,34 +1,33 @@
 #include "Marcador.h"
 #include "GestorRecursos.h"
 
-// constructor del marcador
-Marcador::Marcador(float x, float y, Color c1, Color c2, Color ct, string ico) {
-    Image i; i.create(32,32,c1);
-    for(int j=0;j<32;j++) for(int k=0;k<32;k++) if((j+k)%16<8) i.setPixel(j,k,c2);
-    texCinta.loadFromImage(i); texCinta.setRepeated(true);
-    // configurar las formas y el texto
-    m.setSize({160,90}); m.setPosition(x,y); m.setTexture(&texCinta); m.setTextureRect({0,0,160,90});
-    c.setSize({136,66}); c.setPosition(x+12,y+12); c.setFillColor({80,80,80});
-    p.setSize({116,46}); p.setPosition(x+22,y+22); p.setFillColor({20,50,20});
-    txt.setFont(GestorRecursos::get().getFont("assets/arial.ttf"));
-    txt.setCharacterSize(32); txt.setFillColor(ct); txt.setString("0");
-
-    if(ico!="") { 
-        icono.setTexture(GestorRecursos::get().getTex(ico)); 
-        float s=32.f/icono.getLocalBounds().height; icono.setScale(s,s); 
-    }
+Marcador::Marcador(float x, float y, string rutaImagen) {
+    fondo.setTexture(GestorRecursos::obtenerTextura(rutaImagen));
+    fondo.setPosition(x, y);
+    // ajustamos el tamaño fijo del marcador
+    float anchoFijo = 180.0f;
+    float altoFijo = 70.0f;
+    fondo.setScale(anchoFijo / fondo.getLocalBounds().width, altoFijo / fondo.getLocalBounds().height);
+    // Config del texto
+    texto.setFont(GestorRecursos::obtenerFuente());
+    texto.setCharacterSize(18); 
+    texto.setFillColor(Color::White);
+    texto.setOutlineColor(Color::Black);
+    texto.setOutlineThickness(2);
     actualizar(0);
 }
 
-// actualizar el valor mostrado en el marcador
-void Marcador::actualizar(int val) {
-    txt.setString(to_string(val));
-    FloatRect b = txt.getLocalBounds();
-    float cx = p.getPosition().x + p.getSize().x/2;
-    float cy = p.getPosition().y + p.getSize().y/2;
-    txt.setOrigin(b.left+b.width/2, b.top+b.height/2); txt.setPosition(cx, cy);
-    if(icono.getTexture()) icono.setPosition(cx-60, cy-16);
+void Marcador::actualizar(int valor) {
+    texto.setString(to_string(valor));
+    FloatRect bounds = texto.getLocalBounds();
+    texto.setOrigin(bounds.left + bounds.width/2, bounds.top + bounds.height/2);
+    // centramos el texto en el medio del fondo
+    float centroX = fondo.getPosition().x + (180.0f / 2.0f);
+    float centroY = fondo.getPosition().y + (80.0f / 2.0f); 
+    texto.setPosition(centroX, centroY + 5);
 }
 
-// dibujar el marcador en la ventana
-void Marcador::dibujar(RenderWindow& w) { w.draw(m); w.draw(c); w.draw(p); if(icono.getTexture()) w.draw(icono); w.draw(txt); }
+void Marcador::dibujar(RenderWindow& ventana) { 
+    ventana.draw(fondo); 
+    ventana.draw(texto); 
+}

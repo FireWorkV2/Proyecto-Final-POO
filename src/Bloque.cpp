@@ -1,27 +1,30 @@
 #include "Bloque.h"
 #include "GestorRecursos.h"
 
-// constructor del bloque
-Bloque::Bloque(float x, float y, string img) : cayendo(false), vy(0) {
-    spr.setTexture(GestorRecursos::get().getTex(img));
-    float escala = 60.f / spr.getLocalBounds().width;
-    spr.setScale(escala, escala);
-    spr.setOrigin(spr.getLocalBounds().width/2, spr.getLocalBounds().height/2);
-    spr.setPosition(x,y);
+Bloque::Bloque(float x, float y, string rutaImagen) : velocidadY(0), cayendo(false) {
+    // cargamos la imagen y ajustamos el tamaño
+    sprite.setTexture(GestorRecursos::obtenerTextura(rutaImagen));
+    float escala = 60.f / sprite.getLocalBounds().width;
+    sprite.setScale(escala, escala);
+    // origen en el medio
+    sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getLocalBounds().height/2);
+    sprite.setPosition(x, y);
 }
 
-// marcar el bloque como perfecto
-void Bloque::setPerfecto() {
-    spr.setTexture(GestorRecursos::get().getTex("assets/bloqueperfecto.png"), true);
-    float escala = 60.f / spr.getLocalBounds().width;
-    spr.setScale(escala, escala);
-    spr.setOrigin(spr.getLocalBounds().width/2, spr.getLocalBounds().height/2);
-}
-
-// actualizar la posición del bloque si está cayendo
-void Bloque::actualizar(float dt) {
-    if(cayendo) {
-        vy += 980.f * dt; // Gravedad
-        spr.move(0, vy * dt);
+// si esta cayendo se aplica la gravedad
+void Bloque::actualizar(float deltaTiempo) {
+    if (cayendo) {
+        velocidadY += 980 * deltaTiempo; // se aumenta la velocidad
+        sprite.move(0, velocidadY * deltaTiempo); // se mueve el sprite
     }
+}
+
+void Bloque::dibujar(RenderWindow& ventana) { ventana.draw(sprite); }
+
+// si el bloque cae perfecto (o casi) se lo cambia por un bloque perfecto
+void Bloque::hacerPerfecto() {
+    sprite.setTexture(GestorRecursos::obtenerTextura("assets/bloqueperfecto.png"), true);
+    float escala = 60.f / sprite.getLocalBounds().width;
+    sprite.setScale(escala, escala);
+    sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getLocalBounds().height/2);
 }

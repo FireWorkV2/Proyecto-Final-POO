@@ -3,23 +3,19 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 
-using namespace sf;
+using namespace sf; 
 using namespace std;
 
+// Clase que representa cada bloque que cae
 class Bloque {
 public:
-    Bloque(float x, float y, string img);
-    void actualizar(float dt);
-    void dibujar(RenderWindow& w) { w.draw(spr); }
-    
-    Sprite& getSprite() { return spr; }
-    void setPerfecto();
-    void soltar() { cayendo=true; }
-    void detener() { cayendo=false; vy=0; }
+    Bloque(float x, float y, string rutaImagen);
+    void actualizar(float deltaTiempo); 
+    void dibujar(RenderWindow& ventana);
+    void hacerPerfecto(); 
 
-private:
-    Sprite spr;
-    bool cayendo;
-    float vy;
+    Sprite sprite;
+    float velocidadY;
+    bool cayendo; 
 };
 #endif

@@ -1,23 +1,21 @@
 #ifndef TORRE_H
 #define TORRE_H
-#include <SFML/Graphics.hpp>
-#include <vector>
-#include <memory>
 #include "Bloque.h"
+#include <vector>
 
-using namespace sf;
-using namespace std;
-
+// Clase que guarda los bloques apilados
 class Torre {
 public:
-    Torre(float x=400, float y=570);
-    void dibujar(RenderWindow& w);
-    void agregar(shared_ptr<Bloque> b);
-    bool hayColision(shared_ptr<Bloque> b);
-    float getAltura();
-    static const int BASE_Y = 570;
+    Torre(float y = 570);
+    ~Torre(); 
+    void dibujar(RenderWindow& ventana);
+    bool agregarBloque(Bloque* b); 
+    bool verificarColision(Bloque* b); 
+    float obtenerAltura(); 
+    void reiniciar();
+
 private:
-    vector<shared_ptr<Bloque>> lista;
-    Vector2f posBase;
+    vector<Bloque*> bloquesApilados;
+    float baseY;
 };
 #endif

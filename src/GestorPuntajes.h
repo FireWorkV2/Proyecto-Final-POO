@@ -1,17 +1,16 @@
 #ifndef GESTORPUNTAJES_H
 #define GESTORPUNTAJES_H
-#include <string>
 #include <vector>
+#include <string>
 
 using namespace std;
 
-struct Puntaje {
-    string nombre; int valor;
-};
+// Estructura para guardar datos
+struct RegistroPuntaje { string nombre; int puntos; };
 
 class GestorPuntajes {
 public:
-    static void guardar(string n, int p);
-    static vector<Puntaje> leerMejores();
+    static void guardarPuntaje(string nombre, int puntos);
+    static vector<RegistroPuntaje> leerMejores(); 
 };
 #endif

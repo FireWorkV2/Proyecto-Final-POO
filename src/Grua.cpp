@@ -1,54 +1,58 @@
 #include "Grua.h"
 #include "GestorRecursos.h"
 #include <cmath>
+#include <cstdlib> 
 
-Grua::Grua(float x, float y) : base(x,y), angulo(0), tiempo(0), hay(true) {
-    // Carga manual de lista
-    texturas.push_back("assets/bloquefich.png"); texturas.push_back("assets/bloquefcm.png");
-    texturas.push_back("assets/bloquefca.png"); texturas.push_back("assets/bloquefce.png");
-    texturas.push_back("assets/bloquefcjs.png"); texturas.push_back("assets/bloquefcv.png");
-    texturas.push_back("assets/bloquefhuc.png"); texturas.push_back("assets/bloquefbcb.png");
-    // configurar el gancho
-    gancho.setTexture(GestorRecursos::get().getTex("assets/gancho.png"));
-    gancho.setOrigin(gancho.getLocalBounds().width/2, 0);
-    gancho.setPosition(base);
-    gancho.setScale(0.6f, 120.f/gancho.getLocalBounds().height);
-    generar();
+Grua::Grua(float x, float y) : tiempo(0), angulo(0) {
+    // se cargan los sprites de los bloques
+    listaTexturas = 
+    {"assets/bloquefich.png","assets/bloquefcm.png","assets/bloquefca.png","assets/bloquefce.png",
+    "assets/bloquefcjs.png","assets/bloquefcv.png","assets/bloquefhuc.png","assets/bloquefbcb.png"};
+    // config del gancho
+    spriteGancho.setTexture(GestorRecursos::obtenerTextura("assets/gancho.png"));
+    spriteGancho.setOrigin(spriteGancho.getLocalBounds().width/2, 0);
+    spriteGancho.setScale(0.6f, 120.f/spriteGancho.getLocalBounds().height);
+    spriteGancho.setPosition(x, y);
+    generarBloque();
 }
 
-// generar un nuevo bloque para la grúa
-void Grua::generar() {
-    hay = true;
-    texActual = texturas[rand() % texturas.size()];
-    bloqueVis.setTexture(GestorRecursos::get().getTex(texActual), true);
-    float s = 60.f / bloqueVis.getLocalBounds().width;
-    bloqueVis.setScale(s, s);
-    bloqueVis.setOrigin(bloqueVis.getLocalBounds().width/2, 0);
+// se elige una textura al azar y la ponemos en el gancho
+void Grua::generarBloque() {
+    hayBloque = true; 
+    texturaActual = listaTexturas[rand() % listaTexturas.size()];
+    bloqueVisible.setTexture(GestorRecursos::obtenerTextura(texturaActual), true);
+    float escala = 60.f / bloqueVisible.getLocalBounds().width;
+    bloqueVisible.setScale(escala, escala);
+    bloqueVisible.setOrigin(bloqueVisible.getLocalBounds().width/2, 0);
 }
 
-// actualizar la posición y el ángulo de la grúa
-void Grua::actualizar(float dt) {
-    tiempo += dt;
+void Grua::actualizar(float deltaTiempo, float posY) {
+    spriteGancho.setPosition(spriteGancho.getPosition().x, posY);
+    // funcion para mover el gancho con forma de seno
+    tiempo += deltaTiempo; 
     angulo = 55.f * sin(tiempo * 1.8f);
-    gancho.setRotation(angulo);
-    
-    if(hay) {
-        Transform tr = gancho.getTransform();
-        bloqueVis.setPosition(tr.transformPoint(gancho.getLocalBounds().width/2, gancho.getLocalBounds().height));
-        bloqueVis.setRotation(angulo);
+    spriteGancho.setRotation(angulo);
+    // si esta la grua con un bloque, el bloque debe seguir al gancho
+    if (hayBloque) {
+        bloqueVisible.setPosition(spriteGancho.getTransform().transformPoint(spriteGancho.getLocalBounds().width/2, spriteGancho.getLocalBounds().height));
+        bloqueVisible.setRotation(angulo);
     }
 }
-// dibujar la grúa y el bloque visible
-void Grua::dibujar(RenderWindow& w) { w.draw(gancho); if(hay) w.draw(bloqueVis); }
-void Grua::setY(float y) { base.y = y; gancho.setPosition(base); }
-// soltar el bloque y devolver un puntero compartido al mismo
-shared_ptr<Bloque> Grua::soltar() {
-    if(!hay) return nullptr;
-    Transform tr = bloqueVis.getTransform();
-    Vector2f pos = tr.transformPoint(bloqueVis.getLocalBounds().width/2, bloqueVis.getLocalBounds().height/2);
-    // crear el bloque y configurarlo
-    auto b = make_shared<Bloque>(pos.x, pos.y, texActual);
-    b->getSprite().setRotation(bloqueVis.getRotation());
-    b->soltar(); hay = false;
-    return b;
+
+void Grua::dibujar(RenderWindow& ventana) { 
+    ventana.draw(spriteGancho); 
+    if (hayBloque) ventana.draw(bloqueVisible); 
+}
+
+// se suelta el bloque -> se crea uno dinamico
+Bloque* Grua::soltarBloque() {
+    if (!hayBloque) return nullptr;
+    hayBloque = false;
+    // donde esta la punta del gancho
+    auto pos = bloqueVisible.getTransform().transformPoint(bloqueVisible.getLocalBounds().width/2, bloqueVisible.getLocalBounds().height/2);
+    // se crea un nuevo bloque
+    Bloque* nuevoBloque = new Bloque(pos.x, pos.y, texturaActual); 
+    nuevoBloque->sprite.setRotation(angulo); 
+    nuevoBloque->cayendo = true;
+    return nuevoBloque;
 }
